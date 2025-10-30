@@ -1,5 +1,5 @@
-# Firebase Studio
+# ChronoIQ
 
-This is a NextJS starter in Firebase Studio.
+ChronoIQ helps students use their time more effectively to lessen stress and make their workload more manageable.
 
-To get started, take a look at src/app/page.tsx.
+ChronoIQ Link: https://studio--studio-9264954351-8788a.us-central1.hosted.app/ 
