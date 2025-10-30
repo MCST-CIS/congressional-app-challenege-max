@@ -1,0 +1,105 @@
+/**
+ * @fileoverview Firestore Security Rules for Procrastination Annihilator.
+ *
+ * Core Philosophy: This ruleset enforces a strict user-ownership model, where each user can only access their own data.
+ * Data Structure: All data is nested under /users/{userId}, ensuring clear ownership.  User profiles, events, and assignments are stored in their own collections under the user's document.
+ * Key Security Decisions: User listing is disallowed.  Data is strictly segregated based on user ID.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profiles.
+     * @path /users/{userId}
+     * @allow (create) - If the user is creating their own profile (auth UID matches the document ID).
+     * @allow (get, update, delete) - If the user is the owner of the profile.
+     * @deny (list) - User listing is not allowed.
+     * @deny (create) - If the user ID does not match the authenticated user ID.
+     * @deny (update, delete) - If the user is not the owner of the profile.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      // Verifies that the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Verifies that the user ID matches the authenticated user ID.
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      // Verify existing user
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to events associated with a specific user.
+     * @path /users/{userId}/events/{eventId}
+     * @allow (create, get, list, update, delete) - If the user is the owner of the parent user profile.
+     * @deny (create, update, delete) - If the user is not the owner of the parent user profile.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/events/{eventId} {
+      // Verifies that the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Verifies that the user ID matches the authenticated user ID.
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+        // Verify existing user
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to assignments associated with a specific user.
+     * @path /users/{userId}/assignments/{assignmentId}
+     * @allow (create, get, list, update, delete) - If the user is the owner of the parent user profile.
+     * @deny (create, update, delete) - If the user is not the owner of the parent user profile.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/assignments/{assignmentId} {
+      // Verifies that the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Verifies that the user ID matches the authenticated user ID.
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+        // Verify existing user
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userProfileId == resource.data.userProfileId;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
